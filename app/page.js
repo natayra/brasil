@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useState, memo } from "react";
 import dynamic from "next/dynamic";
 import {
   ReactFlowProvider,
@@ -12,66 +12,60 @@ import {
   Background,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Card, CardContent, Typography, Box, Paper } from "@mui/material";
+import { Card, CardContent, Typography, Box } from "@mui/material";
+import GraphFetcher from "./GraphFetcher";
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
-// Sample graph data for files
-const graphData = {
-  "file1.py": {
-    data: [
-      {
-        x: [1, 2, 3],
-        y: [4, 1, 7],
-        type: "scatter",
-        mode: "lines+markers",
-        marker: { color: "red" },
-      },
-    ],
-    layout: { title: "Graph from file1.py" },
-  },
-  "file2.py": {
-    data: [
-      {
-        labels: ["A", "B", "C"],
-        values: [30, 50, 20],
-        type: "pie",
-      },
-    ],
-    layout: { title: "Graph from file2.py" },
-  },
-};
-
-const files = Object.keys(graphData);
-
-// Unique ID generator
 let id = 0;
 const getId = () => `graph_node_${id++}`;
 
-// Custom node to render Plotly graphs
-const GraphNode = ({ data }) => {
-  const { graph } = data;
+// Custom node to render Plotly charts
+const GraphNode = memo(({ data }) => {
+  const [graphData, setGraphData] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleDataFetched = (data) => {
+    try {
+      if (typeof data === "string") {
+        const parsed = JSON.parse(data);
+        setGraphData(parsed);
+      } else {
+        setGraphData(data);
+      }
+    } catch (err) {
+      console.error("Failed to parse graph data", err);
+      setError("Invalid graph data");
+    }
+  };
 
   return (
     <Box
       sx={{
-        width: 300,
-        height: 250,
+        width: 320,
+        height: 280,
         background: "#fff",
         border: "1px solid #ccc",
+        p: 1,
       }}
     >
-      <Plot
-        data={graph?.data || []}
-        layout={{ ...graph?.layout, autosize: true }}
-        useResizeHandler
-        style={{ width: "100%", height: "100%" }}
-        config={{ responsive: true, autosizable: true }}
-      />
+      <GraphFetcher fileName={data?.label} onDataFetched={handleDataFetched} />
+
+      {error && <div>{error}</div>}
+      {!graphData ? (
+        <Typography variant="body2">Loading graph...</Typography>
+      ) : (
+        <Plot
+          data={graphData.data}
+          layout={{ ...graphData.layout, autosize: true }}
+          useResizeHandler
+          style={{ width: "100%", height: "100%" }}
+        />
+      )}
     </Box>
   );
-};
+});
 
 const nodeTypes = {
   graphNode: GraphNode,
@@ -97,7 +91,7 @@ export default function DnDGraphFlow() {
     const fileName = event.dataTransfer.getData("application/reactflow");
     const flowBounds = reactFlowWrapper.current.getBoundingClientRect();
 
-    if (!fileName || !graphData[fileName]) return;
+    if (!fileName) return;
 
     const position = {
       x: event.clientX - flowBounds.left,
@@ -110,7 +104,6 @@ export default function DnDGraphFlow() {
       position,
       data: {
         label: fileName,
-        graph: graphData[fileName],
       },
     };
 
@@ -121,6 +114,9 @@ export default function DnDGraphFlow() {
     event.dataTransfer.setData("application/reactflow", fileName);
     event.dataTransfer.effectAllowed = "move";
   };
+
+  // You can customize this list or fetch it dynamically
+  const availableFiles = ["Exemplo 1", "Exemplo 2", "Exemplo 3"];
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
@@ -136,7 +132,7 @@ export default function DnDGraphFlow() {
         <Typography variant="h6" gutterBottom>
           Drag a File
         </Typography>
-        {files.map((file) => (
+        {availableFiles.map((file) => (
           <Card
             key={file}
             draggable
