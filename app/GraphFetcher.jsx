@@ -1,18 +1,22 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import {APP_BANCO, APP_DOMINIO} from "./constants/config"
 
-const GraphFetcher = ({ onDataFetched }) => {
+const GraphFetcher = ({ onDataFetched, QUERY }) => {
+const queryText = QUERY
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  
   useEffect(() => {
     const fetchGraphData = async () => {
       try {
-        const response = await fetch("http://209.159.155.110:8000/grafico");
+        const response = await fetch(
+          `http://209.159.155.110:8000/resposta?query_natural=${QUERY}&banco=postgresql&dominio=superstore`
+        );
         if (response.ok) {
           const data = await response.json();
-          onDataFetched(data);  // Pass the fetched data as JSON to the parent
+          onDataFetched(data); // Pass the fetched data as JSON to the parent
         } else {
           setError(`Error: ${response.status}`);
         }
@@ -24,7 +28,7 @@ const GraphFetcher = ({ onDataFetched }) => {
     };
 
     fetchGraphData(); // Fetch data on component mount
-  }, [onDataFetched]);
+  }, [onDataFetched, QUERY]);
 
   if (loading) {
     return <div>Loading...</div>;

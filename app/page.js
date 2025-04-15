@@ -12,7 +12,8 @@ import {
   Background,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Card, CardContent, Typography, Box } from "@mui/material";
+import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
+import SendIcon from "@mui/icons-material/Send";
 import GraphFetcher from "./GraphFetcher";
 
 // Dynamically import Plotly to avoid SSR issues
@@ -22,17 +23,24 @@ let id = 0;
 const getId = () => `graph_node_${id++}`;
 
 // Custom node to render Plotly charts
-const GraphNode = memo(({ data }) => {
+const GraphNode = memo(({ data, query }) => {
   const [graphData, setGraphData] = useState(null);
   const [error, setError] = useState(null);
+  console.log("data", data);
+  console.log("query", query);
 
-  const handleDataFetched = (data) => {
+  const handleDataFetched = (response) => {
     try {
-      if (typeof data === "string") {
-        const parsed = JSON.parse(data);
-        setGraphData(parsed);
+      let parsed =
+        typeof response === "string" ? JSON.parse(response) : response;
+
+      if (parsed?.tipo_resposta === "texto") {
+        const conteudo = parsed.conteudo;
+        const graphPayload =
+          typeof conteudo === "string" ? JSON.parse(conteudo) : conteudo;
+        setGraphData(graphPayload);
       } else {
-        setGraphData(data);
+        setError("Unsupported response type");
       }
     } catch (err) {
       console.error("Failed to parse graph data", err);
@@ -50,8 +58,11 @@ const GraphNode = memo(({ data }) => {
         p: 1,
       }}
     >
-      <GraphFetcher fileName={data?.label} onDataFetched={handleDataFetched} />
-
+      <GraphFetcher
+        fileName={data?.label}
+        onDataFetched={handleDataFetched}
+        QUERY={query}
+      />
       {error && <div>{error}</div>}
       {!graphData ? (
         <Typography variant="body2">Loading graph...</Typography>
@@ -67,14 +78,15 @@ const GraphNode = memo(({ data }) => {
   );
 });
 
-const nodeTypes = {
-  graphNode: GraphNode,
-};
-
 export default function DnDGraphFlow() {
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [chatInput, setChatInput] = useState("");
+
+  const nodeTypes = {
+    graphNode: (props) => <GraphNode {...props} query={chatInput} />,
+  };
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -115,11 +127,26 @@ export default function DnDGraphFlow() {
     event.dataTransfer.effectAllowed = "move";
   };
 
+  const handleSend = () => {
+    if (chatInput.trim()) {
+      console.log("User typed:", chatInput);
+      // Add your message handling logic here
+      setChatInput("");
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
   // You can customize this list or fetch it dynamically
   const availableFiles = ["Exemplo 1", "Exemplo 2", "Exemplo 3"];
 
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box sx={{ display: "flex", height: "84vh" }}>
       {/* Sidebar */}
       <Box
         sx={{
@@ -167,9 +194,55 @@ export default function DnDGraphFlow() {
             style={{ backgroundColor: "#f7f9fb" }}
           >
             <Controls />
+
             <Background />
           </ReactFlow>
         </ReactFlowProvider>
+        <Box
+          sx={{
+            height: "15vh",
+            borderTop: "1px solid #eee",
+            backgroundColor: "#fafafa",
+            display: "flex",
+            alignItems: "center",
+            px: 2,
+          }}
+        >
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: "flex",
+              alignItems: "center",
+              backgroundColor: "#f4f4f4",
+              borderRadius: "16px",
+              px: 2,
+              py: 1,
+              height: "60%",
+              border: "1px solid #D3D3D3",
+            }}
+          >
+            <textarea
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type your message..."
+              style={{
+                flexGrow: 1,
+                border: "none",
+                outline: "none",
+                fontSize: "1rem",
+                resize: "none",
+                background: "transparent",
+                padding: 0,
+                margin: 0,
+                height: "100%",
+              }}
+            />
+            <IconButton onClick={handleSend} color="primary">
+              <SendIcon />
+            </IconButton>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

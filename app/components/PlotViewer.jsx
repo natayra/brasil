@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic"; // Import Next.js dynamic function
-import { getData } from "@/queries/getData";
 
 // Dynamically import Plotly with SSR disabled
 const Plotly = dynamic(() => import("plotly.js-dist"), { ssr: false });
@@ -9,10 +8,8 @@ const PlotViewer = () => {
   const [error, setError] = useState(null); // For handling errors
   const [isLoading, setIsLoading] = useState(true); // For loading state
 
-
-
 const data = async () => {
-  fetch('http://209.159.155.110:8000/grafico')
+  fetch(`http://209.159.155.110:8000/resposta?query_natural=${query_natural}&banco=${banco}&dominio=${dominio}`)
   .then(response => {
   console.log("here", response)
 
@@ -30,7 +27,6 @@ const data = async () => {
 
   };
 
-  console.log("aa", data)
   
   useEffect(() => {
     // Fetch data from the API when the component mounts
