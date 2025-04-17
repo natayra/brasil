@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import {APP_BANCO, APP_DOMINIO} from "./constants/config"
+import { APP_BANCO, APP_DOMINIO } from "../constants/config";
 
 const GraphFetcher = ({ onDataFetched, QUERY }) => {
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ const GraphFetcher = ({ onDataFetched, QUERY }) => {
         );
         if (response.ok) {
           const data = await response.json();
-console.log("data", data)
+          console.log("data", data);
           onDataFetched(data); // Pass the fetched data as JSON to the parent
         } else {
           setError(`Error: ${response.status}`);

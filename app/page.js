@@ -14,7 +14,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
-import GraphFetcher from "./GraphFetcher";
+import GraphFetcher from "./queries/GraphFetcher";
+import Link from 'next/link'
 
 // Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -178,6 +179,7 @@ export default function DnDGraphFlow() {
           textAlign: "center",
         }}
       >
+       <Link href="/login">Login</Link>
         <Typography variant="h6" gutterBottom>
           Últimas pesquisas
         </Typography>
