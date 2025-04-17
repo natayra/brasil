@@ -4,18 +4,18 @@ import React, { useEffect, useState } from "react";
 import {APP_BANCO, APP_DOMINIO} from "./constants/config"
 
 const GraphFetcher = ({ onDataFetched, QUERY }) => {
-const queryText = QUERY
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   useEffect(() => {
     const fetchGraphData = async () => {
       try {
         const response = await fetch(
-          `http://209.159.155.110:8000/resposta?query_natural=${QUERY}&banco=postgresql&dominio=superstore`
+          `http://209.159.155.110:8000/resposta?query_natural="${QUERY}"&banco="postgresql"&dominio="superstore"`
         );
         if (response.ok) {
           const data = await response.json();
+console.log("data", data)
           onDataFetched(data); // Pass the fetched data as JSON to the parent
         } else {
           setError(`Error: ${response.status}`);

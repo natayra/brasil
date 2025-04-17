@@ -26,21 +26,23 @@ const getId = () => `graph_node_${id++}`;
 const GraphNode = memo(({ data, query }) => {
   const [graphData, setGraphData] = useState(null);
   const [error, setError] = useState(null);
-  console.log("data", data);
-  console.log("query", query);
 
   const handleDataFetched = (response) => {
     try {
+      console.log("API response:", response); // Add this
       let parsed =
         typeof response === "string" ? JSON.parse(response) : response;
 
-      if (parsed?.tipo_resposta === "texto") {
+      if (parsed?.conteudo) {
         const conteudo = parsed.conteudo;
         const graphPayload =
           typeof conteudo === "string" ? JSON.parse(conteudo) : conteudo;
-        setGraphData(graphPayload);
-      } else {
-        setError("Unsupported response type");
+
+        if (graphPayload?.data && graphPayload?.layout) {
+          setGraphData(graphPayload);
+        } else {
+          setError("Invalid graph format");
+        }
       }
     } catch (err) {
       console.error("Failed to parse graph data", err);
@@ -61,11 +63,11 @@ const GraphNode = memo(({ data, query }) => {
       <GraphFetcher
         fileName={data?.label}
         onDataFetched={handleDataFetched}
-        QUERY={query}
+        QUERY={data?.query || data?.label}
       />
       {error && <div>{error}</div>}
       {!graphData ? (
-        <Typography variant="body2">Loading graph...</Typography>
+        <Typography variant="body2"></Typography>
       ) : (
         <Plot
           data={graphData.data}
@@ -83,9 +85,10 @@ export default function DnDGraphFlow() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [chatInput, setChatInput] = useState("");
+  const [submittedQuestions, setSubmittedQuestions] = useState([]);
 
   const nodeTypes = {
-    graphNode: (props) => <GraphNode {...props} query={chatInput} />,
+    graphNode: GraphNode,
   };
 
   const onConnect = useCallback(
@@ -100,11 +103,12 @@ export default function DnDGraphFlow() {
 
   const onDrop = useCallback((event) => {
     event.preventDefault();
-    const fileName = event.dataTransfer.getData("application/reactflow");
+    const rawData = event.dataTransfer.getData("application/reactflow");
+
+    if (!rawData) return;
+
+    const { label, query } = JSON.parse(rawData);
     const flowBounds = reactFlowWrapper.current.getBoundingClientRect();
-
-    if (!fileName) return;
-
     const position = {
       x: event.clientX - flowBounds.left,
       y: event.clientY - flowBounds.top,
@@ -114,23 +118,39 @@ export default function DnDGraphFlow() {
       id: getId(),
       type: "graphNode",
       position,
-      data: {
-        label: fileName,
-      },
+      data: { label, query },
     };
 
     setNodes((nds) => nds.concat(newNode));
   }, []);
 
-  const onDragStart = (event, fileName) => {
-    event.dataTransfer.setData("application/reactflow", fileName);
+  const onDragStart = (event, item) => {
+    event.dataTransfer.setData("application/reactflow", JSON.stringify(item));
     event.dataTransfer.effectAllowed = "move";
   };
 
   const handleSend = () => {
     if (chatInput.trim()) {
-      console.log("User typed:", chatInput);
-      // Add your message handling logic here
+      const newItem = {
+        label: chatInput,
+        query: chatInput,
+      };
+
+      setSubmittedQuestions((prev) => [...prev, newItem]);
+
+      // Add the node to the canvas
+      const newNode = {
+        id: getId(),
+        type: "graphNode",
+        position: {
+          x: 250 + Math.random() * 200, // Random offset so they don’t overlap
+          y: 100 + Math.random() * 200,
+        },
+        data: newItem,
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+
       setChatInput("");
     }
   };
@@ -157,13 +177,13 @@ export default function DnDGraphFlow() {
         }}
       >
         <Typography variant="h6" gutterBottom>
-          Drag a File
+          Últimas pesquisas 
         </Typography>
-        {availableFiles.map((file) => (
+        {submittedQuestions.map((item, index) => (
           <Card
-            key={file}
+            key={`submitted-${index}`}
             draggable
-            onDragStart={(e) => onDragStart(e, file)}
+            onDragStart={(e) => onDragStart(e, item)}
             sx={{
               mb: 2,
               cursor: "grab",
@@ -172,7 +192,7 @@ export default function DnDGraphFlow() {
             }}
           >
             <CardContent>
-              <Typography>{file}</Typography>
+              <Typography>{item.label}</Typography>
             </CardContent>
           </Card>
         ))}
