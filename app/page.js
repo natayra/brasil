@@ -174,10 +174,15 @@ export default function DnDGraphFlow() {
           p: 2,
           backgroundColor: "#f4f4f4",
           borderRight: "1px solid #ddd",
+          position: "relative",
+          textAlign: "center",
         }}
       >
         <Typography variant="h6" gutterBottom>
-          Últimas pesquisas 
+          Últimas pesquisas
+        </Typography>
+        <Typography variant="subtitle" marginBottom="8rem">
+          (arraste para ver)
         </Typography>
         {submittedQuestions.map((item, index) => (
           <Card
@@ -185,10 +190,11 @@ export default function DnDGraphFlow() {
             draggable
             onDragStart={(e) => onDragStart(e, item)}
             sx={{
-              mb: 2,
+              my: 2,
               cursor: "grab",
               "&:hover": { transform: "scale(1.03)" },
               transition: "transform 0.2s",
+              textAlign: "left"
             }}
           >
             <CardContent>
@@ -196,6 +202,39 @@ export default function DnDGraphFlow() {
             </CardContent>
           </Card>
         ))}
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 16,
+            left: 16,
+            right: 16,
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Selecione um domínio
+          </Typography>
+          <Box
+            component="select"
+            sx={{
+              width: "100%",
+              padding: "8px 10px",
+              borderRadius: "10px",
+              border: "1px solid #ccc",
+              fontSize: "14px",
+              backgroundColor: "#fff",
+              outline: "none",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+              color: "#333",
+            }}
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Superstore
+            </option>
+            <option value="placeholder1">Placeholder 1</option>
+            <option value="placeholder2">Placeholder 2</option>
+          </Box>
+        </Box>
       </Box>
 
       {/* Canvas */}
