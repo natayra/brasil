@@ -2,7 +2,8 @@
   "compilerOptions": {
     "paths": {
       "@/*": ["./app/pages/*"],
-      "@/q*": ["./app/queries/*"]
+      "@/q*": ["./app/queries/*"],
+      "@/d*": ["./app/components/*"]
     }
   }
 }
