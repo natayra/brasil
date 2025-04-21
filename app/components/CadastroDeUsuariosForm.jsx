@@ -86,14 +86,13 @@ export default function CadastroDeUsuariosForm() {
           }}
           sx={{ mb: 3 }}
         />
-
         <Button
           variant="outlined"
           fullWidth
           onClick={handleSubmit}
           sx={{ textTransform: "none" }}
         >
-          Entrar
+          Cadastrar
         </Button>
       </Paper>
     </Box>

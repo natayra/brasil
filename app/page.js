@@ -1,308 +1,384 @@
 "use client";
 
-import React, { useRef, useCallback, useState, memo } from "react";
+import React, { useState, useRef, useCallback, memo } from "react";
 import dynamic from "next/dynamic";
 import {
-  ReactFlowProvider,
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Stack,
+  Card,
+  CardContent,
+  Select,
+  MenuItem,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Menu,
+  Divider,
+} from "@mui/material";
+import { AccountCircle } from "@mui/icons-material";
+import {
   ReactFlow,
-  addEdge,
+  ReactFlowProvider,
   useNodesState,
   useEdgesState,
+  addEdge,
   Controls,
   Background,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Card, CardContent, Typography, Box, IconButton } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
 import GraphFetcher from "./queries/GraphFetcher";
-import Link from 'next/link'
 
-// Dynamically import Plotly to avoid SSR issues
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 let id = 0;
 const getId = () => `graph_node_${id++}`;
 
-// Custom node to render Plotly charts
-const GraphNode = memo(({ data, query }) => {
+const GraphNode = memo(({ data }) => {
   const [graphData, setGraphData] = useState(null);
   const [error, setError] = useState(null);
 
   const handleDataFetched = (response) => {
     try {
-      console.log("API response:", response); // Add this
       let parsed =
         typeof response === "string" ? JSON.parse(response) : response;
-
       if (parsed?.conteudo) {
-        const conteudo = parsed.conteudo;
-        const graphPayload =
-          typeof conteudo === "string" ? JSON.parse(conteudo) : conteudo;
-
-        if (graphPayload?.data && graphPayload?.layout) {
-          setGraphData(graphPayload);
+        const content =
+          typeof parsed.conteudo === "string"
+            ? JSON.parse(parsed.conteudo)
+            : parsed.conteudo;
+        if (content?.data && content?.layout) {
+          setGraphData(content);
         } else {
           setError("Invalid graph format");
         }
       }
     } catch (err) {
-      console.error("Failed to parse graph data", err);
       setError("Invalid graph data");
     }
   };
 
   return (
-    <Box
-      sx={{
-        width: 320,
-        height: 280,
-        background: "#fff",
-        border: "1px solid #ccc",
-        p: 1,
-      }}
-    >
+    <Box sx={{ width: 320, height: 280, background: "#fff", borderRadius: 2 }}>
       <GraphFetcher
         fileName={data?.label}
         onDataFetched={handleDataFetched}
         QUERY={data?.query || data?.label}
       />
-      {error && <div>{error}</div>}
-      {!graphData ? (
-        <Typography variant="body2"></Typography>
-      ) : (
+      {error && <Typography color="error">{error}</Typography>}
+      {graphData && (
         <Plot
           data={graphData.data}
           layout={{ ...graphData.layout, autosize: true }}
           useResizeHandler
-          style={{ width: "100%", height: "100%" }}
+          style={{ width: "100%", height: "100%", padding: 0 }}
         />
       )}
     </Box>
   );
 });
 
-export default function DnDGraphFlow() {
+export default function DashboardLayout() {
+  const [activeTab, setActiveTab] = useState("Ask2Data");
+  const [message, setMessage] = useState("");
+  const [submittedQuestions, setSubmittedQuestions] = useState([]);
+  const [contexto, setContexto] = useState("Default");
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [chatInput, setChatInput] = useState("");
-  const [submittedQuestions, setSubmittedQuestions] = useState([]);
 
-  const nodeTypes = {
-    graphNode: GraphNode,
-  };
-
-  const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    []
-  );
-
-  const onDragOver = useCallback((event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-  }, []);
+  const nodeTypes = { graphNode: GraphNode };
 
   const onDrop = useCallback((event) => {
     event.preventDefault();
     const rawData = event.dataTransfer.getData("application/reactflow");
-
     if (!rawData) return;
 
     const { label, query } = JSON.parse(rawData);
-    const flowBounds = reactFlowWrapper.current.getBoundingClientRect();
+    const bounds = reactFlowWrapper.current.getBoundingClientRect();
     const position = {
-      x: event.clientX - flowBounds.left,
-      y: event.clientY - flowBounds.top,
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top,
     };
-
     const newNode = {
       id: getId(),
       type: "graphNode",
       position,
       data: { label, query },
     };
-
     setNodes((nds) => nds.concat(newNode));
   }, []);
 
-  const onDragStart = (event, item) => {
-    event.dataTransfer.setData("application/reactflow", JSON.stringify(item));
-    event.dataTransfer.effectAllowed = "move";
+  const onDragStart = (e, item) => {
+    e.dataTransfer.setData("application/reactflow", JSON.stringify(item));
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleSend = () => {
-    if (chatInput.trim()) {
-      const newItem = {
-        label: chatInput,
-        query: chatInput,
-      };
-
-      setSubmittedQuestions((prev) => [...prev, newItem]);
-
-      // Add the node to the canvas
+    if (message.trim()) {
+      const newItem = { label: message, query: message };
       const newNode = {
         id: getId(),
         type: "graphNode",
         position: {
-          x: 250 + Math.random() * 200, // Random offset so they don’t overlap
-          y: 100 + Math.random() * 200,
+          x: 200 + Math.random() * 300,
+          y: 100 + Math.random() * 300,
         },
         data: newItem,
       };
-
+      setSubmittedQuestions((prev) => [...prev, newItem]);
       setNodes((nds) => [...nds, newNode]);
-
-      setChatInput("");
+      setMessage("");
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  // You can customize this list or fetch it dynamically
-  const availableFiles = ["Exemplo 1", "Exemplo 2", "Exemplo 3"];
+  const tabs = ["Ask2Data", "Dahboards", "Configurações", "ChatPDF"];
 
   return (
-    <Box sx={{ display: "flex", height: "84vh" }}>
+    <Box sx={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       {/* Sidebar */}
       <Box
         sx={{
           width: 240,
-          p: 2,
-          backgroundColor: "#f4f4f4",
+          background: "#fff",
           borderRight: "1px solid #ddd",
-          position: "relative",
-          textAlign: "center",
+          p: 2,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          height: "100vh",
+          zIndex: 1201,
         }}
       >
-       <Link href="/login">Login</Link>
-        <Typography variant="h6" gutterBottom>
-          Últimas pesquisas
-        </Typography>
-        <Typography variant="subtitle" marginBottom="8rem">
-          (arraste para ver)
-        </Typography>
-        {submittedQuestions.map((item, index) => (
-          <Card
-            key={`submitted-${index}`}
-            draggable
-            onDragStart={(e) => onDragStart(e, item)}
-            sx={{
-              my: 2,
-              cursor: "grab",
-              "&:hover": { transform: "scale(1.03)" },
-              transition: "transform 0.2s",
-              textAlign: "left"
-            }}
-          >
-            <CardContent>
-              <Typography>{item.label}</Typography>
-            </CardContent>
-          </Card>
-        ))}
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: 16,
-            left: 16,
-            right: 16,
-          }}
-        >
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
-            Selecione um domínio
+        <Box>
+          <Typography variant="h6" textAlign="center" fontWeight={600} mb={2}>
+            Navegação
           </Typography>
-          <Box
-            component="select"
-            sx={{
-              width: "100%",
-              padding: "8px 10px",
-              borderRadius: "10px",
-              border: "1px solid #ccc",
-              fontSize: "14px",
-              backgroundColor: "#fff",
-              outline: "none",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-              color: "#333",
-            }}
-            defaultValue=""
-          >
-            <option value="" disabled>
-              Superstore
-            </option>
-            <option value="placeholder1">Placeholder 1</option>
-            <option value="placeholder2">Placeholder 2</option>
+          <Stack spacing={1}>
+            {tabs.map((t) => (
+              <Typography
+                key={t}
+                onClick={() => setActiveTab(t)}
+                sx={{
+                  cursor: "pointer",
+                  fontSize: 14,
+                  fontWeight: activeTab === t ? 600 : 400,
+                  color: "#333",
+                }}
+              >
+                {t}
+              </Typography>
+            ))}
+          </Stack>
+
+          <Box mt={5}>
+            <Typography variant="subtitle2" gutterBottom>
+              Últimas pesquisas
+            </Typography>
+            {submittedQuestions.map((item, i) => (
+              <Card
+                key={i}
+                draggable
+                onDragStart={(e) => onDragStart(e, item)}
+                sx={{
+                  my: 1,
+                  cursor: "grab",
+                  "&:hover": { transform: "scale(1.03)" },
+                  transition: "transform 0.2s",
+                }}
+              >
+                <CardContent>
+                  <Typography variant="body2">{item.label}</Typography>
+                </CardContent>
+              </Card>
+            ))}
           </Box>
         </Box>
+
+        {activeTab === "Ask2Data" && (
+          <Box sx={{ mb: 10 }}>
+            <Typography variant="subtitle2" gutterBottom>
+              Contexto
+            </Typography>
+            <Select
+              fullWidth
+              size="small"
+              value={contexto}
+              onChange={(e) => setContexto(e.target.value)}
+            >
+              <MenuItem value="Default">Default</MenuItem>
+              <MenuItem value="Vendas">Vendas</MenuItem>
+              <MenuItem value="Marketing">Marketing</MenuItem>
+              <MenuItem value="Financeiro">Financeiro</MenuItem>
+            </Select>
+          </Box>
+        )}
       </Box>
 
-      {/* Canvas */}
-      <Box sx={{ flexGrow: 1 }} ref={reactFlowWrapper}>
-        <ReactFlowProvider>
-          <ReactFlow
-            nodeTypes={nodeTypes}
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            fitView
-            style={{ backgroundColor: "#f7f9fb" }}
-          >
-            <Controls />
-
-            <Background />
-          </ReactFlow>
-        </ReactFlowProvider>
-        <Box
-          sx={{
-            height: "15vh",
-            borderTop: "1px solid #eee",
-            backgroundColor: "#fafafa",
-            display: "flex",
-            alignItems: "center",
-            px: 2,
-          }}
+      {/* Main Content */}
+      <Box
+        sx={{
+          flexGrow: 1,
+          ml: "280px",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <AppBar
+          position="static"
+          elevation={0}
+          sx={{ background: "#fff", borderBottom: "1px solid #ddd" }}
         >
+          <Toolbar sx={{ justifyContent: "flex-end" }}>
+            {isLoggedIn ? (
+              <>
+                <IconButton onClick={handleMenuOpen}>
+                  <AccountCircle fontSize="large" sx={{ color: "#333" }} />
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={openMenu}
+                  onClose={handleMenuClose}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      alert("Minha conta");
+                    }}
+                  >
+                    Minha conta
+                  </MenuItem>
+                  <Divider />
+                  <MenuItem
+                    onClick={() => {
+                      handleMenuClose();
+                      setIsLoggedIn(false);
+                    }}
+                  >
+                    Logout
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <Button variant="outlined" onClick={() => setIsLoggedIn(true)}>
+                Login
+              </Button>
+            )}
+          </Toolbar>
+        </AppBar>
+
+        <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
           <Box
-            sx={{
-              flexGrow: 1,
-              display: "flex",
-              alignItems: "center",
-              backgroundColor: "#f4f4f4",
-              borderRadius: "16px",
-              px: 2,
-              py: 1,
-              height: "60%",
-              border: "1px solid #D3D3D3",
-            }}
+            sx={{ flexGrow: 1, p: 2, overflowY: "auto" }}
+            ref={reactFlowWrapper}
           >
-            <textarea
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type your message..."
-              style={{
-                flexGrow: 1,
-                border: "none",
-                outline: "none",
-                fontSize: "1rem",
-                resize: "none",
-                background: "transparent",
-                padding: 0,
-                margin: 0,
-                height: "100%",
-              }}
-            />
-            <IconButton onClick={handleSend} color="primary">
-              <SendIcon />
-            </IconButton>
+            {activeTab === "Ask2Data" && (
+              <ReactFlowProvider>
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                  onConnect={(params) =>
+                    setEdges((eds) => addEdge(params, eds))
+                  }
+                  nodeTypes={nodeTypes}
+                  onDrop={onDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  fitView
+                  style={{ width: "100%", height: "100%" }}
+                >
+                  <Controls />
+                  <Background />
+                </ReactFlow>
+              </ReactFlowProvider>
+            )}
+
+            {activeTab === "Dahboards" && (
+              <Box>
+                <Typography variant="h6" mb={1}>
+                  Painel de Dados
+                </Typography>
+                <table
+                  style={{
+                    width: "100%",
+                    border: "1px solid #ccc",
+                    borderCollapse: "collapse",
+                  }}
+                >
+                  <thead style={{ background: "#e0f7fa" }}>
+                    <tr>
+                      <th style={{ padding: 8 }}>Nome</th>
+                      <th style={{ padding: 8 }}>Valor</th>
+                      <th style={{ padding: 8 }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(4)].map((_, i) => (
+                      <tr key={i}>
+                        <td style={{ padding: 8 }}>Item {i + 1}</td>
+                        <td style={{ padding: 8 }}>123</td>
+                        <td style={{ padding: 8 }}>OK</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </Box>
+            )}
+
+            {activeTab === "Configurações" && (
+              <Typography variant="body1">
+                Configurações do sistema aparecem aqui.
+              </Typography>
+            )}
+
+            {activeTab === "ChatPDF" && (
+              <Typography variant="body1">
+                Integração com ChatPDF será exibida aqui.
+              </Typography>
+            )}
           </Box>
+
+          {activeTab === "Ask2Data" && (
+            <Box
+              sx={{
+                p: 2,
+                borderTop: "1px solid #ddd",
+                backgroundColor: "#fff",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <TextField
+                placeholder="Digite sua pergunta..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSend();
+                }}
+                fullWidth
+                variant="outlined"
+                sx={{ mr: 2 }}
+              />
+              <Button variant="contained" onClick={handleSend}>
+                Enviar
+              </Button>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>
