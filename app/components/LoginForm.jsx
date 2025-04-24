@@ -8,14 +8,20 @@ import {
   IconButton,
   InputAdornment,
   Typography,
-  Paper,
   Alert,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import CloseIcon from "@mui/icons-material/Close";
+import Link from "next/link";
 
-export default function LoginForm() {
+export default function LoginModal({ setIsLoggedIn }) {
+  const [open, setOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState(null);
@@ -43,13 +49,15 @@ export default function LoginForm() {
     try {
       const response = await fetch(url);
       const data = await response.json();
-console.log("response", response)
-console.log("data", data)
-      if (response.ok && data.success === true) {
+      if (response.ok && data === true) {
+        console.log(data);
         setSuccess(true);
+        setIsLoggedIn(true);
         localStorage.setItem("user", form.username);
-        // Optionally redirect or trigger global state
         console.log("Login success");
+        setTimeout(() => {
+          setOpen(false);
+        }, 1500);
       } else {
         setError(data.message || "Falha no login");
       }
@@ -61,77 +69,95 @@ console.log("data", data)
   };
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      height="100vh"
-      bgcolor="#f5f5f5"
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          borderRadius: 2,
-          width: "100%",
-          maxWidth: 400,
+    <>
+      <Button variant="contained" onClick={() => setOpen(true)}>
+        Login
+      </Button>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        PaperProps={{
+          sx: { borderRadius: 3, p: 2 },
         }}
       >
-        <form onSubmit={handleSubmit}>
-          <Typography variant="h6" gutterBottom>
-            Nome de usuário
-          </Typography>
-          <TextField
-            fullWidth
-            name="username"
-            value={form.username}
-            onChange={handleChange}
-            variant="filled"
-            placeholder="Digite seu usuário"
-            sx={{ mb: 3 }}
-          />
+        <DialogTitle sx={{ textAlign: "center", fontWeight: 600 }}>
+          Login
+        </DialogTitle>
+        <Box
+          display="flex"
+          justifyContent="flex-end"
+          position="absolute"
+          top={10}
+          right={10}
+        >
+          <IconButton onClick={() => setOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <DialogContent>
+          <form onSubmit={handleSubmit}>
+            <Typography variant="subtitle1" gutterBottom>
+              Nome de usuário
+            </Typography>
+            <TextField
+              fullWidth
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              variant="filled"
+              placeholder="Digite seu usuário"
+              sx={{ mb: 2 }}
+            />
 
-          <Typography variant="h6" gutterBottom>
-            Senha
-          </Typography>
-          <TextField
-            fullWidth
-            name="password"
-            type={showPassword ? "text" : "password"}
-            value={form.password}
-            onChange={handleChange}
-            variant="filled"
-            placeholder="Digite sua senha"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={handleTogglePassword} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
-            }}
-            sx={{ mb: 3 }}
-          />
+            <Typography variant="subtitle1" gutterBottom>
+              Senha
+            </Typography>
+            <TextField
+              fullWidth
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={form.password}
+              onChange={handleChange}
+              variant="filled"
+              placeholder="Digite sua senha"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={handleTogglePassword} edge="end">
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ mb: 2 }}
+            />
 
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          {success && (
-            <Alert severity="success" sx={{ mb: 2 }}>
-              Login realizado com sucesso!
-            </Alert>
-          )}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                Login realizado com sucesso!
+              </Alert>
+            )}
 
-          <Button
-            type="submit"
-            variant="outlined"
-            fullWidth
-            disabled={loading}
-            sx={{ textTransform: "none" }}
-          >
-            {loading ? <CircularProgress size={24} /> : "Entrar"}
-          </Button>
-        </form>
-      </Paper>
-    </Box>
+            <DialogActions sx={{ flexDirection: "column", justifyContent: "center", mt: 1 }}>
+              <Button
+                type="submit"
+                variant="outlined"
+                fullWidth
+                disabled={loading}
+                sx={{ textTransform: "none", marginBottom: 3 }}
+              >
+                {loading ? <CircularProgress size={24} /> : "Entrar"}
+              </Button>
+              <Link href="/cadastrodeusuarios">Ainda não está cadastrado?</Link>
+            </DialogActions>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

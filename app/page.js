@@ -30,6 +30,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import GraphFetcher from "./queries/GraphFetcher";
+import Image from "next/image";
+import LoginModal from "./components/LoginForm"; // adjust the path to where your component is
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -81,12 +83,13 @@ const GraphNode = memo(({ data }) => {
 });
 
 export default function DashboardLayout() {
+  const [loginOpen, setLoginOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Ask2Data");
   const [message, setMessage] = useState("");
   const [submittedQuestions, setSubmittedQuestions] = useState([]);
   const [contexto, setContexto] = useState("Default");
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  console.log(isLoggedIn);
   const [anchorEl, setAnchorEl] = useState(null);
   const openMenu = Boolean(anchorEl);
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
@@ -163,6 +166,16 @@ export default function DashboardLayout() {
         }}
       >
         <Box>
+          {/* Logo on top of sidebar */}
+          <Box sx={{ textAlign: "center", mb: 2 }}>
+            <Image
+              src="/assets/ask2Data_logo.png"
+              alt="Logo"
+              width={180}
+              height={100}
+            />
+          </Box>
+
           <Typography variant="h6" textAlign="center" fontWeight={600} mb={2}>
             Navegação
           </Typography>
@@ -231,7 +244,7 @@ export default function DashboardLayout() {
       <Box
         sx={{
           flexGrow: 1,
-          ml: "280px",
+          ml: "230px",
           display: "flex",
           flexDirection: "column",
         }}
@@ -239,7 +252,7 @@ export default function DashboardLayout() {
         <AppBar
           position="static"
           elevation={0}
-          sx={{ background: "#fff", borderBottom: "1px solid #ddd" }}
+          sx={{ background: "#fff", borderBottom: "1px solid #ddd", px: 2 }}
         >
           <Toolbar sx={{ justifyContent: "flex-end" }}>
             {isLoggedIn ? (
@@ -274,9 +287,9 @@ export default function DashboardLayout() {
                 </Menu>
               </>
             ) : (
-              <Button variant="outlined" onClick={() => setIsLoggedIn(true)}>
-                Login
-              </Button>
+              <>
+                <LoginModal setIsLoggedIn={setIsLoggedIn}/>
+              </>
             )}
           </Toolbar>
         </AppBar>
