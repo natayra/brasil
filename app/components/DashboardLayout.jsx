@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { useRouter } from "next/navigation"; // <- NEW
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -36,7 +36,7 @@ let id = 0;
 const getId = () => `graph_node_${id++}`;
 
 export default function DashboardLayout() {
-  const [activeTab, setActiveTab] = useState("Ask2Data");
+  const [activeTab, setActiveTab] = useState("Dashboards");
   const [message, setMessage] = useState("");
   const [submittedQuestions, setSubmittedQuestions] = useState([]);
   const [contexto, setContexto] = useState("Default");
@@ -46,19 +46,34 @@ export default function DashboardLayout() {
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const router = useRouter(); // <- NEW
+  const router = useRouter();
 
   const nodeTypes = { graphNode: GraphNode };
 
   useEffect(() => {
-    // On page load, check if user is logged in
-    const user = localStorage.getItem("user");
-    if (user) {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
       setIsLoggedIn(true);
+      fetchUserQuestions(storedUser);
+      router.push("/dashboard");
     } else {
-      router.push("/"); // Redirect to login if not logged
+      router.push("/");
     }
   }, []);
+
+  const fetchUserQuestions = async (storedUser) => {
+    console.log("here");
+    try {
+      const res = await fetch(
+        `http://209.159.155.110:8000/userPerguntas?user=${storedUser}`
+      );
+      const data = await res.json();
+      console.log("data", data);
+      setSubmittedQuestions(data);
+    } catch (err) {
+      console.error("Erro ao buscar perguntas:", err);
+    }
+  };
 
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -66,36 +81,52 @@ export default function DashboardLayout() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     setIsLoggedIn(false);
-    router.push("/"); // Back to login page
+    router.push("/");
   };
 
-  const onDrop = useCallback((event) => {
-    event.preventDefault();
-    const rawData = event.dataTransfer.getData("application/reactflow");
-    if (!rawData) return;
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      const rawData = event.dataTransfer.getData("application/reactflow");
+      if (!rawData) return;
 
-    const { label, query } = JSON.parse(rawData);
-    const bounds = reactFlowWrapper.current.getBoundingClientRect();
-    const position = {
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top,
-    };
-    const newNode = {
-      id: getId(),
-      type: "graphNode",
-      position,
-      data: { label, query },
-    };
-    setNodes((nds) => nds.concat(newNode));
-  }, []);
+      const { label, query } = JSON.parse(rawData);
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = {
+        x: event.clientX - bounds.left,
+        y: event.clientY - bounds.top,
+      };
+
+      const newNode = {
+        id: getId(),
+        type: "graphNode",
+        position,
+        data: {
+          label,
+          query,
+          hasFetched: false,
+        },
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+    },
+    [reactFlowWrapper]
+  );
 
   const onDragStart = (e, item) => {
-    e.dataTransfer.setData("application/reactflow", JSON.stringify(item));
+    const payload = {
+      label: item.ds_texto_pergunta,
+      query: item.ds_texto_pergunta, // or item.query if it's a separate field
+      id: item.id_pergunta, // include ID if useful later
+    };
+    e.dataTransfer.setData("application/reactflow", JSON.stringify(payload));
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (message.trim()) {
+      const user = localStorage.getItem("user");
+
       const newItem = { label: message, query: message };
       const newNode = {
         id: getId(),
@@ -106,15 +137,21 @@ export default function DashboardLayout() {
         },
         data: newItem,
       };
-      setSubmittedQuestions((prev) => [...prev, newItem]);
+
       setNodes((nds) => [...nds, newNode]);
       setMessage("");
     }
   };
 
-  const tabs = ["Ask2Data", "Dahboards", "Configurações", "ChatPDF"];
+  const tabs = [
+    "Data Canvas",
+    "Data Explorer",
+    "Dashboards",
+    "ChatPDF",
+    "Configurações",
+  ];
 
-  if (!isLoggedIn) return null; // Avoid showing page while checking login
+  if (!isLoggedIn) return null;
 
   return (
     <Box sx={{ height: "100vh", display: "flex", overflow: "hidden" }}>
@@ -169,44 +206,34 @@ export default function DashboardLayout() {
             <Typography variant="subtitle2" gutterBottom>
               Últimas pesquisas
             </Typography>
-            {submittedQuestions.map((item, i) => (
-              <Card
-                key={i}
-                draggable
-                onDragStart={(e) => onDragStart(e, item)}
-                sx={{
-                  my: 1,
-                  cursor: "grab",
-                  "&:hover": { transform: "scale(1.03)" },
-                  transition: "transform 0.2s",
-                }}
-              >
-                <CardContent>
-                  <Typography variant="body2">{item.label}</Typography>
-                </CardContent>
-              </Card>
-            ))}
+            <Box
+              sx={{
+                overflowY: "scroll",
+                maxHeight: "40vh",
+              }}
+            >
+              {submittedQuestions.map((item, i) => (
+                <Card
+                  key={i}
+                  draggable
+                  onDragStart={(e) => onDragStart(e, item)}
+                  sx={{
+                    my: 1,
+                    cursor: "grab",
+                    "&:hover": { transform: "scale(1.03)" },
+                    transition: "transform 0.2s",
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="body2">
+                      {item.ds_texto_pergunta}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
           </Box>
         </Box>
-
-        {activeTab === "Ask2Data" && (
-          <Box sx={{ mb: 10 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Contexto
-            </Typography>
-            <Select
-              fullWidth
-              size="small"
-              value={contexto}
-              onChange={(e) => setContexto(e.target.value)}
-            >
-              <MenuItem value="Default">Default</MenuItem>
-              <MenuItem value="Vendas">Vendas</MenuItem>
-              <MenuItem value="Marketing">Marketing</MenuItem>
-              <MenuItem value="Financeiro">Financeiro</MenuItem>
-            </Select>
-          </Box>
-        )}
       </Box>
 
       {/* Main Content */}
@@ -224,30 +251,51 @@ export default function DashboardLayout() {
           sx={{ background: "#fff", borderBottom: "1px solid #ddd", px: 2 }}
         >
           <Toolbar sx={{ justifyContent: "flex-end" }}>
-            <IconButton onClick={handleMenuOpen}>
-              <AccountCircle fontSize="large" sx={{ color: "#333" }} />
-            </IconButton>
-            <Menu
-              anchorEl={anchorEl}
-              open={openMenu}
-              onClose={handleMenuClose}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
+            <Stack
+              width="100%"
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
             >
-              <MenuItem onClick={handleMenuClose}>Minha conta</MenuItem>
-              <Divider />
-              <MenuItem onClick={handleLogout}>Logout</MenuItem>
-            </Menu>
+              {activeTab === "Dashboards" && (
+                <Box>
+                  <Select
+                    fullWidth
+                    size="small"
+                    value={contexto}
+                    onChange={(e) => setContexto(e.target.value)}
+                  >
+                    <MenuItem value="Default">Contexto</MenuItem>
+                    <MenuItem value="Vendas">Vendas</MenuItem>
+                    <MenuItem value="Marketing">Marketing</MenuItem>
+                    <MenuItem value="Financeiro">Financeiro</MenuItem>
+                  </Select>
+                </Box>
+              )}
+              <IconButton onClick={handleMenuOpen}>
+                <AccountCircle fontSize="large" sx={{ color: "#333" }} />
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={openMenu}
+                onClose={handleMenuClose}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+              >
+                <MenuItem onClick={handleMenuClose}>Minha conta</MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
+            </Stack>
           </Toolbar>
         </AppBar>
 
-        {/* Main section */}
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
           <Box
             sx={{ flexGrow: 1, p: 2, overflowY: "auto" }}
             ref={reactFlowWrapper}
           >
-            {activeTab === "Ask2Data" && (
+            {activeTab === "Dashboards" && (
               <ReactFlowProvider>
                 <ReactFlow
                   nodes={nodes}
@@ -314,7 +362,7 @@ export default function DashboardLayout() {
             )}
           </Box>
 
-          {activeTab === "Ask2Data" && (
+          {activeTab === "Dashboards" && (
             <Box
               sx={{
                 p: 2,

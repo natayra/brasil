@@ -1,4 +1,4 @@
-import React, { useState, memo } from "react";
+import React, { useState, memo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import GraphFetcher from "../../queries/GraphFetcher";
 import { Box, Typography } from "@mui/material";
@@ -8,8 +8,10 @@ const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 const GraphNode = memo(({ data }) => {
   const [graphData, setGraphData] = useState(null);
   const [error, setError] = useState(null);
+  console.log("graphData", data);
 
-  const handleDataFetched = (response) => {
+
+  const handleDataFetched = useCallback((response) => {
     try {
       let parsed =
         typeof response === "string" ? JSON.parse(response) : response;
@@ -27,14 +29,14 @@ const GraphNode = memo(({ data }) => {
     } catch (err) {
       setError("Invalid graph data");
     }
-  };
+  }, []);
 
   return (
     <Box sx={{ width: 320, height: 280, background: "#fff", borderRadius: 2 }}>
       <GraphFetcher
-        fileName={data?.label}
+        fileName={data?.ds_texto_pergunta}
         onDataFetched={handleDataFetched}
-        QUERY={data?.query || data?.label}
+        QUERY={data?.query || data?.ds_texto_pergunta}
       />
       {error && <Typography color="error">{error}</Typography>}
       {graphData && (

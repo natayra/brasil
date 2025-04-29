@@ -1,44 +1,29 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { APP_BANCO, APP_DOMINIO } from "../constants/config";
 
 const GraphFetcher = ({ onDataFetched, QUERY }) => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+console.log("here")
   useEffect(() => {
     const fetchGraphData = async () => {
       try {
         const response = await fetch(
           `http://209.159.155.110:8000/resposta?query_natural="${QUERY}"&banco="postgresql"&dominio="superstore"&user="natayras@gmail.com"`
         );
-        if (response.ok) {
-          const data = await response.json();
-          console.log("data", data);
-          onDataFetched(data); // Pass the fetched data as JSON to the parent
-        } else {
-          setError(`Error: ${response.status}`);
-        }
-      } catch (err) {
-        setError(`Error: ${err.message}`);
+        const data = await response.json();
+        onDataFetched(data);
+      } catch (error) {
+        console.error("Error fetching graph data:", error);
       } finally {
-        setLoading(false); // Stop loading once the fetch is done
+        setLoading(false);
       }
     };
 
-    fetchGraphData(); // Fetch data on component mount
-  }, [onDataFetched, QUERY]);
+    fetchGraphData();
+  }, [QUERY, onDataFetched]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>{error}</div>;
-  }
-
-  return null; // Do not render anything once data is fetched
+  return loading ? <div>Carregando...</div> : null;
 };
 
 export default GraphFetcher;

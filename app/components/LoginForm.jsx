@@ -17,14 +17,21 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const router = useRouter(); // <- here!
-
+  const storedUser = localStorage.getItem("user");
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      router.push("/dashboard");
+    }
+  }, []);
+  
   const handleChange = (e) => {
     setForm((prev) => ({
       ...prev,
