@@ -2,8 +2,12 @@
 
 import { useEffect } from "react";
 
-const ContextoFetcher = ({ selectedContexto, setContextosUser, contextosUser }) => {
-  const user = localStorage.getItem("user");
+const ContextoFetcher = ({
+  selectedContexto,
+  setContextosUser,
+  contextosUser,
+}) => {
+  const user = localStorage && localStorage.getItem("user");
 
   useEffect(() => {
     const fetchContextoData = async () => {

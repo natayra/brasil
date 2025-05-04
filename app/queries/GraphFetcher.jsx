@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 
 const GraphFetcher = ({ onDataFetched, QUERY }) => {
   const [loading, setLoading] = useState(true);
-  const user = localStorage.getItem("user");
+  const user = localStorage & localStorage.getItem("user");
 
   useEffect(() => {
     const fetchGraphData = async () => {

@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage & localStorage.getItem("user");
     if (storedUser) {
       router.push("/datacanvas");
     }

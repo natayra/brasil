@@ -39,7 +39,7 @@ export default function DataCanvas() {
   const nodeTypes = { graphNode: GraphNode };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const storedUser = localStorage &&  localStorage.getItem("user");
     if (storedUser) {
       setIsLoggedIn(true);
       fetchUserQuestions(storedUser);
