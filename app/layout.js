@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Ask4Data"
+  title: "inn2Data"
 };
 
 export default function RootLayout({ children }) {

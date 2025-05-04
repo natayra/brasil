@@ -15,9 +15,9 @@ import {
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginPage() {
-  const storedUser = localStorage.getItem("user");
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
@@ -28,10 +28,10 @@ export default function LoginPage() {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      router.push("/dashboard");
+      router.push("/datacanvas");
     }
   }, []);
-  
+
   const handleChange = (e) => {
     setForm((prev) => ({
       ...prev,
@@ -72,7 +72,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (success) {
       const timer = setTimeout(() => {
-        router.push("/dashboard"); // <- redirect here
+        router.push("/datacanvas"); // <- redirect here
       }, 500); // wait 1.5 seconds so user sees the success message
 
       return () => clearTimeout(timer);
@@ -91,6 +91,14 @@ export default function LoginPage() {
         p: 3,
       }}
     >
+      <Box sx={{ position: "absolute", left: "2%", top: "2%", textAlign: "center", mb: 2 }}>
+        <Image
+          src="/assets/inn2Data_logo.jpeg"
+          alt="Logo"
+          width={130}
+          height={60}
+        />
+      </Box>
       <Box
         sx={{
           width: "100%",

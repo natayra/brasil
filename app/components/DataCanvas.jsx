@@ -7,18 +7,7 @@ import {
   Typography,
   TextField,
   Button,
-  Stack,
-  Card,
-  CardContent,
-  Select,
-  MenuItem,
-  AppBar,
-  Toolbar,
-  IconButton,
-  Menu,
-  Divider,
 } from "@mui/material";
-import { AccountCircle } from "@mui/icons-material";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -29,25 +18,24 @@ import {
   Background,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import Image from "next/image";
 import GraphNode from "./Graphs/GraphNode";
+import SideBar from "./SideBar";
+import TopBar from "./TopBar";
+import ContextoDropdown from "./ContextoDropdown";
+
 
 let id = 0;
 const getId = () => `graph_node_${id++}`;
 
-export default function DashboardLayout() {
-  const [activeTab, setActiveTab] = useState("Dashboards");
-  const [message, setMessage] = useState("");
+export default function DataCanvas() {
+  const [activeTab, setActiveTab] = useState("Data Canvas");
   const [submittedQuestions, setSubmittedQuestions] = useState([]);
-  const [contexto, setContexto] = useState("Default");
+  const [message, setMessage] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const router = useRouter();
-
   const nodeTypes = { graphNode: GraphNode };
 
   useEffect(() => {
@@ -55,14 +43,13 @@ export default function DashboardLayout() {
     if (storedUser) {
       setIsLoggedIn(true);
       fetchUserQuestions(storedUser);
-      router.push("/dashboard");
+      router.push("/datacanvas");
     } else {
       router.push("/");
     }
   }, []);
 
   const fetchUserQuestions = async (storedUser) => {
-    console.log("here");
     try {
       const res = await fetch(
         `http://209.159.155.110:8000/userPerguntas?user=${storedUser}`
@@ -73,15 +60,6 @@ export default function DashboardLayout() {
     } catch (err) {
       console.error("Erro ao buscar perguntas:", err);
     }
-  };
-
-  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
-  const handleMenuClose = () => setAnchorEl(null);
-
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    router.push("/");
   };
 
   const onDrop = useCallback(
@@ -113,20 +91,8 @@ export default function DashboardLayout() {
     [reactFlowWrapper]
   );
 
-  const onDragStart = (e, item) => {
-    const payload = {
-      label: item.ds_texto_pergunta,
-      query: item.ds_texto_pergunta, // or item.query if it's a separate field
-      id: item.id_pergunta, // include ID if useful later
-    };
-    e.dataTransfer.setData("application/reactflow", JSON.stringify(payload));
-    e.dataTransfer.effectAllowed = "move";
-  };
-
   const handleSend = async () => {
     if (message.trim()) {
-      const user = localStorage.getItem("user");
-
       const newItem = { label: message, query: message };
       const newNode = {
         id: getId(),
@@ -143,159 +109,35 @@ export default function DashboardLayout() {
     }
   };
 
-  const tabs = [
-    "Data Canvas",
-    "Data Explorer",
-    "Dashboards",
-    "ChatPDF",
-    "Configurações",
-  ];
-
-  if (!isLoggedIn) return null;
-
   return (
     <Box sx={{ height: "100vh", display: "flex", overflow: "hidden" }}>
+      {/* Topbar */}
+      <TopBar 
+        setIsLoggedIn={setIsLoggedIn}
+        />
       {/* Sidebar */}
-      <Box
-        sx={{
-          width: 240,
-          background: "#fff",
-          borderRight: "1px solid #ddd",
-          p: 2,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          height: "100vh",
-          zIndex: 1201,
-        }}
-      >
-        <Box>
-          <Box sx={{ textAlign: "center", mb: 2 }}>
-            <Image
-              src="/assets/ask2Data_logo.png"
-              alt="Logo"
-              width={180}
-              height={100}
-            />
-          </Box>
-
-          <Typography variant="h6" textAlign="center" fontWeight={600} mb={2}>
-            Navegação
-          </Typography>
-          <Stack spacing={1}>
-            {tabs.map((t) => (
-              <Typography
-                key={t}
-                onClick={() => setActiveTab(t)}
-                sx={{
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: activeTab === t ? 600 : 400,
-                  color: "#333",
-                }}
-              >
-                {t}
-              </Typography>
-            ))}
-          </Stack>
-
-          <Box mt={5}>
-            <Typography variant="subtitle2" gutterBottom>
-              Últimas pesquisas
-            </Typography>
-            <Box
-              sx={{
-                overflowY: "scroll",
-                maxHeight: "40vh",
-              }}
-            >
-              {submittedQuestions.map((item, i) => (
-                <Card
-                  key={i}
-                  draggable
-                  onDragStart={(e) => onDragStart(e, item)}
-                  sx={{
-                    my: 1,
-                    cursor: "grab",
-                    "&:hover": { transform: "scale(1.03)" },
-                    transition: "transform 0.2s",
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="body2">
-                      {item.ds_texto_pergunta}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
+      <SideBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        isLoggedIn={isLoggedIn}
+        setIsLoggedIn={setIsLoggedIn}
+        submittedQuestions={submittedQuestions}
+      />
       {/* Main Content */}
       <Box
         sx={{
           flexGrow: 1,
-          ml: "230px",
+          ml: "300px",
           display: "flex",
           flexDirection: "column",
         }}
       >
-        <AppBar
-          position="static"
-          elevation={0}
-          sx={{ background: "#fff", borderBottom: "1px solid #ddd", px: 2 }}
-        >
-          <Toolbar sx={{ justifyContent: "flex-end" }}>
-            <Stack
-              width="100%"
-              flexDirection="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              {activeTab === "Dashboards" && (
-                <Box>
-                  <Select
-                    fullWidth
-                    size="small"
-                    value={contexto}
-                    onChange={(e) => setContexto(e.target.value)}
-                  >
-                    <MenuItem value="Default">Contexto</MenuItem>
-                    <MenuItem value="Vendas">Vendas</MenuItem>
-                    <MenuItem value="Marketing">Marketing</MenuItem>
-                    <MenuItem value="Financeiro">Financeiro</MenuItem>
-                  </Select>
-                </Box>
-              )}
-              <IconButton onClick={handleMenuOpen}>
-                <AccountCircle fontSize="large" sx={{ color: "#333" }} />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={openMenu}
-                onClose={handleMenuClose}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                transformOrigin={{ vertical: "top", horizontal: "right" }}
-              >
-                <MenuItem onClick={handleMenuClose}>Minha conta</MenuItem>
-                <Divider />
-                <MenuItem onClick={handleLogout}>Logout</MenuItem>
-              </Menu>
-            </Stack>
-          </Toolbar>
-        </AppBar>
-
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
           <Box
             sx={{ flexGrow: 1, p: 2, overflowY: "auto" }}
             ref={reactFlowWrapper}
           >
-            {activeTab === "Dashboards" && (
+            {activeTab === "Data Canvas" && (
               <ReactFlowProvider>
                 <ReactFlow
                   nodes={nodes}
@@ -362,7 +204,7 @@ export default function DashboardLayout() {
             )}
           </Box>
 
-          {activeTab === "Dashboards" && (
+          {activeTab === "Data Canvas" && (
             <Box
               sx={{
                 p: 2,
@@ -372,6 +214,9 @@ export default function DashboardLayout() {
                 alignItems: "center",
               }}
             >
+              <Box mr="0.5rem">
+               <ContextoDropdown/>
+              </Box>
               <TextField
                 placeholder="Digite sua pergunta..."
                 value={message}

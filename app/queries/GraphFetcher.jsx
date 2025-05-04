@@ -4,12 +4,13 @@ import React, { useEffect, useState } from "react";
 
 const GraphFetcher = ({ onDataFetched, QUERY }) => {
   const [loading, setLoading] = useState(true);
-console.log("here")
+  const user = localStorage.getItem("user");
+
   useEffect(() => {
     const fetchGraphData = async () => {
       try {
         const response = await fetch(
-          `http://209.159.155.110:8000/resposta?query_natural="${QUERY}"&banco="postgresql"&dominio="superstore"&user="natayras@gmail.com"`
+          `http://209.159.155.110:8000/resposta?query_natural="${QUERY}"&banco="postgresql"&dominio="superstore"&user=${user}`
         );
         const data = await response.json();
         onDataFetched(data);
