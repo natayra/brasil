@@ -2,12 +2,7 @@
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-} from "@mui/material";
+import { Box, Typography, TextField, Button } from "@mui/material";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -22,7 +17,8 @@ import GraphNode from "./Graphs/GraphNode";
 import SideBar from "./SideBar";
 import TopBar from "./TopBar";
 import ContextoDropdown from "./ContextoDropdown";
-
+import SubmittedQuestionsFetcher from "../queries/SubmittedQuestionsFetcher";
+import useLoggedUser from "../hooks/useLoggedUser";
 
 let id = 0;
 const getId = () => `graph_node_${id++}`;
@@ -37,30 +33,16 @@ export default function DataCanvas() {
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const router = useRouter();
   const nodeTypes = { graphNode: GraphNode };
+  const storedUser = useLoggedUser();
 
   useEffect(() => {
-    const storedUser = localStorage &&  localStorage.getItem("user");
     if (storedUser) {
       setIsLoggedIn(true);
-      fetchUserQuestions(storedUser);
       router.push("/datacanvas");
     } else {
       router.push("/");
     }
   }, []);
-
-  const fetchUserQuestions = async (storedUser) => {
-    try {
-      const res = await fetch(
-        `http://209.159.155.110:8000/userPerguntas?user=${storedUser}`
-      );
-      const data = await res.json();
-      console.log("data", data);
-      setSubmittedQuestions(data);
-    } catch (err) {
-      console.error("Erro ao buscar perguntas:", err);
-    }
-  };
 
   const onDrop = useCallback(
     (event) => {
@@ -111,10 +93,12 @@ export default function DataCanvas() {
 
   return (
     <Box sx={{ height: "100vh", display: "flex", overflow: "hidden" }}>
+      <SubmittedQuestionsFetcher
+        setSubmittedQuestions={setSubmittedQuestions}
+        nodes={nodes}
+      />
       {/* Topbar */}
-      <TopBar 
-        setIsLoggedIn={setIsLoggedIn}
-        />
+      <TopBar setIsLoggedIn={setIsLoggedIn} />
       {/* Sidebar */}
       <SideBar
         activeTab={activeTab}
@@ -215,7 +199,7 @@ export default function DataCanvas() {
               }}
             >
               <Box mr="0.5rem">
-               <ContextoDropdown/>
+                <ContextoDropdown />
               </Box>
               <TextField
                 placeholder="Digite sua pergunta..."

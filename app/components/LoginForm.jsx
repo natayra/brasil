@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation"; // <- import this!
+import { useRouter } from "next/navigation";
 import {
   Box,
   TextField,
@@ -16,6 +16,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Link from "next/link";
 import Image from "next/image";
+import useLoggedUser from "../hooks/useLoggedUser";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,9 +25,9 @@ export default function LoginPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const storedUser = useLoggedUser();
 
   useEffect(() => {
-    const storedUser = localStorage & localStorage.getItem("user");
     if (storedUser) {
       router.push("/datacanvas");
     }
@@ -53,6 +54,7 @@ export default function LoginPage() {
     try {
       const response = await fetch(url);
       const data = await response.json();
+      
       if (response.ok && data === true) {
         setSuccess(true);
         localStorage.setItem("user", form.username);
@@ -91,7 +93,15 @@ export default function LoginPage() {
         p: 3,
       }}
     >
-      <Box sx={{ position: "absolute", left: "2%", top: "2%", textAlign: "center", mb: 2 }}>
+      <Box
+        sx={{
+          position: "absolute",
+          left: "2%",
+          top: "2%",
+          textAlign: "center",
+          mb: 2,
+        }}
+      >
         <Image
           src="/assets/inn2Data_logo.jpeg"
           alt="Logo"

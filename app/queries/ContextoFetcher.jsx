@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import useLoggedUser from "../hooks/useLoggedUser";
 
 const ContextoFetcher = ({
   selectedContexto,
   setContextosUser,
   contextosUser,
 }) => {
-  const user = localStorage && localStorage.getItem("user");
+  const user = useLoggedUser();
 
   useEffect(() => {
     const fetchContextoData = async () => {
@@ -20,7 +21,7 @@ const ContextoFetcher = ({
         const dominiosName = data.map((dominio) => dominio.nm_dominio);
         setContextosUser([...contextosUser, dominiosName].flat());
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching contexto data:", error);
       }
     };
 

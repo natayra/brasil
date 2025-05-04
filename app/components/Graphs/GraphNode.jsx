@@ -10,7 +10,6 @@ const GraphNode = memo(({ data }) => {
   const [error, setError] = useState(null);
   console.log("graphData", data);
 
-
   const handleDataFetched = useCallback((response) => {
     try {
       let parsed =
@@ -42,7 +41,13 @@ const GraphNode = memo(({ data }) => {
       {graphData && (
         <Plot
           data={graphData.data}
-          layout={{ ...graphData.layout, autosize: true }}
+          layout={{
+            ...graphData.layout,
+            autosize: true,
+            margin: { l: 10, r: 10, t: 30, b: 30 },
+            font: { size: 10 },
+            legend: { font: { size: 8 } },
+          }}
           useResizeHandler
           style={{ width: "100%", height: "100%", padding: 0 }}
         />

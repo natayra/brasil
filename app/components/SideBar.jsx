@@ -26,6 +26,7 @@ const SideBar = ({
     e.dataTransfer.setData("application/reactflow", JSON.stringify(payload));
     e.dataTransfer.effectAllowed = "move";
   };
+
   return (
     <Box
       sx={{
@@ -75,7 +76,7 @@ const SideBar = ({
               scrollbarWidth: "0px",
             }}
           >
-            {submittedQuestions.map((item, i) => (
+            {submittedQuestions.slice().reverse().map((item, i) => (
               <Card
                 key={i}
                 draggable
