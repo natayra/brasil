@@ -11,6 +11,7 @@ import {
   addEdge,
   Controls,
   Background,
+  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import GraphNode from "./Graphs/GraphNode";
@@ -23,6 +24,45 @@ import useLoggedUser from "../hooks/useLoggedUser";
 let id = 0;
 const getId = () => `graph_node_${id++}`;
 
+function FlowWithAutoFit({
+  nodes,
+  edges,
+  onNodesChange,
+  onEdgesChange,
+  onDrop,
+  nodeTypes,
+  setEdges,
+}) {
+  const { fitView } = useReactFlow();
+
+  useEffect(() => {
+    if (nodes.length > 0) {
+      const timeout = setTimeout(() => {
+        fitView({ padding: 0.2 });
+      }, 0);
+      return () => clearTimeout(timeout);
+    }
+  }, [nodes, fitView]);
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={(params) => setEdges((eds) => addEdge(params, eds))}
+      nodeTypes={nodeTypes}
+      onDrop={onDrop}
+      onDragOver={(e) => e.preventDefault()}
+      fitView
+      style={{ width: "100%", height: "100%" }}
+    >
+      <Controls showFitView />
+      <Background />
+    </ReactFlow>
+  );
+}
+
 export default function DataCanvas() {
   const [activeTab, setActiveTab] = useState("Data Canvas");
   const [submittedQuestions, setSubmittedQuestions] = useState([]);
@@ -32,8 +72,17 @@ export default function DataCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const router = useRouter();
-  const nodeTypes = { graphNode: GraphNode };
   const storedUser = useLoggedUser();
+  const nodeTypes = {
+    graphNode: (nodeProps) => (
+      <GraphNode
+        {...nodeProps}
+        id={nodeProps.id}
+        onRefresh={handleRefresh}
+        onRemove={handleRemove}
+      />
+    ),
+  };
 
   useEffect(() => {
     if (storedUser) {
@@ -44,8 +93,33 @@ export default function DataCanvas() {
     }
   }, []);
 
+  const fetchGraphData = async (query, user) => {
+    try {
+      const response = await fetch(
+        `http://209.159.155.110:8000/resposta?query_natural=${query}&banco=postgresql&dominio=superstore&user=${user}`
+      );
+      const data = await response.json();
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+
+      if (parsed?.conteudo) {
+        const content =
+          typeof parsed.conteudo === "string"
+            ? JSON.parse(parsed.conteudo)
+            : parsed.conteudo;
+
+        if (content?.data && content?.layout) {
+          return content;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch node data:", error);
+    }
+
+    return null;
+  };
+
   const onDrop = useCallback(
-    (event) => {
+    async (event) => {
       event.preventDefault();
       const rawData = event.dataTransfer.getData("application/reactflow");
       if (!rawData) return;
@@ -57,6 +131,8 @@ export default function DataCanvas() {
         y: event.clientY - bounds.top,
       };
 
+      const result = await fetchGraphData(query, storedUser);
+
       const newNode = {
         id: getId(),
         type: "graphNode",
@@ -64,18 +140,20 @@ export default function DataCanvas() {
         data: {
           label,
           query,
-          hasFetched: false,
+          result,
         },
       };
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [reactFlowWrapper]
+    [reactFlowWrapper, storedUser]
   );
 
   const handleSend = async () => {
     if (message.trim()) {
-      const newItem = { label: message, query: message };
+      const query = message;
+      const result = await fetchGraphData(query, storedUser);
+
       const newNode = {
         id: getId(),
         type: "graphNode",
@@ -83,12 +161,36 @@ export default function DataCanvas() {
           x: 200 + Math.random() * 300,
           y: 100 + Math.random() * 300,
         },
-        data: newItem,
+        data: { label: query, query, result },
       };
 
       setNodes((nds) => [...nds, newNode]);
       setMessage("");
     }
+  };
+
+  const handleRefresh = async (nodeId, query) => {
+    const result = await fetchGraphData(query, storedUser);
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                result,
+              },
+            }
+          : node
+      )
+    );
+  };
+
+  const handleRemove = (nodeId) => {
+    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    setEdges((eds) =>
+      eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+    );
   };
 
   return (
@@ -97,9 +199,9 @@ export default function DataCanvas() {
         setSubmittedQuestions={setSubmittedQuestions}
         nodes={nodes}
       />
-      {/* Topbar */}
+
       <TopBar setIsLoggedIn={setIsLoggedIn} />
-      {/* Sidebar */}
+
       <SideBar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -107,11 +209,12 @@ export default function DataCanvas() {
         setIsLoggedIn={setIsLoggedIn}
         submittedQuestions={submittedQuestions}
       />
-      {/* Main Content */}
+
       <Box
         sx={{
           flexGrow: 1,
-          ml: "300px",
+          position: "relative",
+          left: "300px",
           display: "flex",
           flexDirection: "column",
         }}
@@ -123,23 +226,15 @@ export default function DataCanvas() {
           >
             {activeTab === "Data Canvas" && (
               <ReactFlowProvider>
-                <ReactFlow
+                <FlowWithAutoFit
                   nodes={nodes}
                   edges={edges}
                   onNodesChange={onNodesChange}
                   onEdgesChange={onEdgesChange}
-                  onConnect={(params) =>
-                    setEdges((eds) => addEdge(params, eds))
-                  }
-                  nodeTypes={nodeTypes}
                   onDrop={onDrop}
-                  onDragOver={(e) => e.preventDefault()}
-                  fitView
-                  style={{ width: "100%", height: "100%" }}
-                >
-                  <Controls />
-                  <Background />
-                </ReactFlow>
+                  nodeTypes={nodeTypes}
+                  setEdges={setEdges}
+                />
               </ReactFlowProvider>
             )}
 

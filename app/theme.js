@@ -17,6 +17,11 @@ const theme = createTheme({
       default: '#f1f8f4', // light minty background
       paper: '#ffffff',
     },
+    error: {
+      main: "#ffb09c",
+      light: "#fbd9d3",
+      dark: "#ee2400"
+    }
   },
   shape: {
     borderRadius: 5, // soft rounded corners

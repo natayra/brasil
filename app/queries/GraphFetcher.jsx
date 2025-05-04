@@ -11,7 +11,7 @@ const GraphFetcher = ({ onDataFetched, QUERY }) => {
     const fetchGraphData = async () => {
       try {
         const response = await fetch(
-          `http://209.159.155.110:8000/resposta?query_natural="${QUERY}"&banco="postgresql"&dominio="superstore"&user=${user}`
+          `http://209.159.155.110:8000/resposta?query_natural=${QUERY}&banco=postgresql&dominio=superstore&user=${user}`
         );
         const data = await response.json();
         console.log("data here", data)
