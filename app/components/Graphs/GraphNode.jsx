@@ -48,7 +48,7 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
       </IconButton>
 
       {!graphData && <Typography>Loading...</Typography>}
-      {graphData && (
+      {graphData && Array.isArray(graphData.data) && graphData.layout ? (
         <Plot
           data={graphData.data}
           layout={{
@@ -72,6 +72,10 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
             overflow: "visible",
           }}
         />
+      ) : (
+        <Typography variant="body2" color="textSecondary">
+          Sem dados suficientes para gerar o gráfico.
+        </Typography>
       )}
     </Box>
   );
