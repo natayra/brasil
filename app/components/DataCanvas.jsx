@@ -37,12 +37,9 @@ function FlowWithAutoFit({
 
   useEffect(() => {
     if (nodes.length > 0) {
-      const timeout = setTimeout(() => {
-        fitView({ padding: 0.2 });
-      }, 0);
-      return () => clearTimeout(timeout);
+      fitView({ padding: 0.2 });
     }
-  }, [nodes, fitView]);
+  }, []);
 
   return (
     <ReactFlow
@@ -199,9 +196,7 @@ export default function DataCanvas() {
         setSubmittedQuestions={setSubmittedQuestions}
         nodes={nodes}
       />
-
       <TopBar setIsLoggedIn={setIsLoggedIn} />
-
       <SideBar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -209,14 +204,12 @@ export default function DataCanvas() {
         setIsLoggedIn={setIsLoggedIn}
         submittedQuestions={submittedQuestions}
       />
-
       <Box
         sx={{
           flexGrow: 1,
-          position: "relative",
-          left: "300px",
           display: "flex",
           flexDirection: "column",
+          marginLeft: "300px"
         }}
       >
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>

@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import { AccountCircle } from "@mui/icons-material";
 import Image from "next/image";
+import Logo from "../assets/inn2Data.jpeg"
 
 const TopBar = ({ setIsLoggedIn }) => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -58,7 +59,7 @@ const TopBar = ({ setIsLoggedIn }) => {
             }}
           >
             <Image
-              src="/assets/inn2Data_logo.jpeg"
+              src={Logo}
               alt="Logo"
               width={130}
               height={60}

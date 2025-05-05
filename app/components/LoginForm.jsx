@@ -17,6 +17,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Link from "next/link";
 import Image from "next/image";
 import useLoggedUser from "../hooks/useLoggedUser";
+import Logo from "../assets/inn2Data.jpeg"
 
 export default function LoginPage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function LoginPage() {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      
+
       if (response.ok && data === true) {
         setSuccess(true);
         localStorage.setItem("user", form.username);
@@ -103,7 +104,7 @@ export default function LoginPage() {
         }}
       >
         <Image
-          src="/assets/inn2Data_logo.jpeg"
+          src={Logo}
           alt="Logo"
           width={130}
           height={60}
