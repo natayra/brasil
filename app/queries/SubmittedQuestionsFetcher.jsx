@@ -3,10 +3,11 @@
 import { useEffect } from "react";
 import useLoggedUser from "../hooks/useLoggedUser";
 
-const SubmittedQuestionsFetcher = ({ setSubmittedQuestions, nodes }) => {
+const SubmittedQuestionsFetcher = ({ setSubmittedQuestions }) => {
   const user = useLoggedUser();
 
   useEffect(() => {
+    console.log("here")
     const fetchSubmittedQuestions = async () => {
       try {
         const response = await fetch(
@@ -20,7 +21,7 @@ const SubmittedQuestionsFetcher = ({ setSubmittedQuestions, nodes }) => {
     };
 
     fetchSubmittedQuestions();
-  }, [nodes]);
+  }, []);
 };
 
 export default SubmittedQuestionsFetcher;

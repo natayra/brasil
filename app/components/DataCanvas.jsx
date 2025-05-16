@@ -194,7 +194,6 @@ export default function DataCanvas() {
     <Box sx={{ height: "100vh", display: "flex", overflow: "hidden" }}>
       <SubmittedQuestionsFetcher
         setSubmittedQuestions={setSubmittedQuestions}
-        nodes={nodes}
       />
       <TopBar setIsLoggedIn={setIsLoggedIn} />
       <SideBar
