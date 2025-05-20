@@ -74,8 +74,8 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
       >
         <CloseIcon sx={{ fontSize: "0.75rem" }} />
       </IconButton>
-      {!graphData && <Typography>Loading...</Typography>}
-      {graphData && Array.isArray(graphData.data) && graphData.layout ? (
+      {!graphData && <Typography variant="h6" p={10} pt={8}>Carregando...</Typography>}
+      {graphData && Array.isArray(graphData.data) && graphData.layout && (
         <Plot
           data={graphData.data}
           layout={{
@@ -94,10 +94,6 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
             pointerEvents: isResizing ? "none" : "auto",
           }}
         />
-      ) : (
-        <Typography variant="body2" color="textSecondary">
-          Sem dados suficientes para gerar o gráfico.
-        </Typography>
       )}
     </Box>
   );
