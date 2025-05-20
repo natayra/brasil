@@ -20,7 +20,7 @@ import TopBar from "./TopBar";
 import ContextoDropdown from "./ContextoDropdown";
 import SubmittedQuestionsFetcher from "../queries/SubmittedQuestionsFetcher";
 import useLoggedUser from "../hooks/useLoggedUser";
-
+import ResizableNode from "./Graphs/ResizableNode"
 let id = 0;
 const getId = () => `graph_node_${id++}`;
 
@@ -71,6 +71,7 @@ export default function DataCanvas() {
   const router = useRouter();
   const storedUser = useLoggedUser();
   const nodeTypes = {
+    ResizableNode, 
     graphNode: (nodeProps) => (
       <GraphNode
         {...nodeProps}
@@ -134,6 +135,7 @@ export default function DataCanvas() {
         id: getId(),
         type: "graphNode",
         position,
+        style: { width: 300, height: 200 }, 
         data: {
           label,
           query,
