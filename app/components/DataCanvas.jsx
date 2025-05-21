@@ -20,7 +20,7 @@ import TopBar from "./TopBar";
 import ContextoDropdown from "./ContextoDropdown";
 import SubmittedQuestionsFetcher from "../queries/SubmittedQuestionsFetcher";
 import useLoggedUser from "../hooks/useLoggedUser";
-import ResizableNode from "./Graphs/ResizableNode"
+import ResizableNode from "./Graphs/ResizableNode";
 let id = 0;
 const getId = () => `graph_node_${id++}`;
 
@@ -71,7 +71,7 @@ export default function DataCanvas() {
   const router = useRouter();
   const storedUser = useLoggedUser();
   const nodeTypes = {
-    ResizableNode, 
+    ResizableNode,
     graphNode: (nodeProps) => (
       <GraphNode
         {...nodeProps}
@@ -135,7 +135,7 @@ export default function DataCanvas() {
         id: getId(),
         type: "graphNode",
         position,
-        style: { width: 300, height: 200 }, 
+        style: { width: 300, height: 200 },
         data: {
           label,
           query,
@@ -152,32 +152,29 @@ export default function DataCanvas() {
     if (message.trim()) {
       const query = message;
       const result = await fetchGraphData(query, storedUser);
-  
-      // Default position to center of viewport (like a drop in the center)
       const bounds = reactFlowWrapper.current.getBoundingClientRect();
       const position = {
-        x: bounds.width / 2 - 150, // center minus half of node width
-        y: bounds.height / 2 - 100, // center minus half of node height
+        x: bounds.width / 2 - 150,
+        y: bounds.height / 2 - 100,
       };
-  
+
       const newNode = {
         id: getId(),
         type: "graphNode",
         position,
-        style: { width: 300, height: 200 }, // Match onDrop
+        style: { width: 300, height: 200 },
         data: { label: query, query, result },
       };
-  
+
       setNodes((nds) => [...nds, newNode]);
-  
+
       setTimeout(() => {
         fitView({ padding: 0.2 });
-      }, 0); // Ensures fitView runs after state update
-  
+      }, 0);
+
       setMessage("");
     }
   };
-  
 
   const handleRefresh = async (nodeId, query) => {
     const result = await fetchGraphData(query, storedUser);
@@ -221,7 +218,7 @@ export default function DataCanvas() {
           flexGrow: 1,
           display: "flex",
           flexDirection: "column",
-          marginLeft: "300px"
+          marginLeft: "300px",
         }}
       >
         <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>

@@ -31,7 +31,6 @@ export default function CadastroDeUsuariosForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Login attempted with:", form);
-    // Add your login logic here (API call, redirect, etc.)
   };
 
   return (

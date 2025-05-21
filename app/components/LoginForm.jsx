@@ -75,8 +75,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (success) {
       const timer = setTimeout(() => {
-        router.push("/datacanvas"); // <- redirect here
-      }, 500); // wait 1.5 seconds so user sees the success message
+        router.push("/datacanvas");
+      }, 200); 
 
       return () => clearTimeout(timer);
     }

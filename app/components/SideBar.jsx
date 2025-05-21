@@ -20,8 +20,8 @@ const SideBar = ({
   const onDragStart = (e, item) => {
     const payload = {
       label: item.ds_texto_pergunta,
-      query: item.ds_texto_pergunta, // or item.query if it's a separate field
-      id: item.id_pergunta, // include ID if useful later
+      query: item.ds_texto_pergunta,
+      id: item.id_pergunta, 
     };
     e.dataTransfer.setData("application/reactflow", JSON.stringify(payload));
     e.dataTransfer.effectAllowed = "move";
