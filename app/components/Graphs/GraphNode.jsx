@@ -10,7 +10,6 @@ const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
   const graphData = data.result;
 
-  // Check if resizing is happening
   const isResizing = useStore((state) => {
     const internals = state?.nodeInternals;
     return internals?.get?.(id)?.resizing ?? false;
@@ -24,20 +23,20 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
         position: "relative",
         borderRadius: 2,
         overflow: "hidden",
-        paddingTop: "6.5%",
+        paddingTop: "3%",
         background: "#fff",
         border: "1px solid #ccc",
+        boxSizing: "border-box",  
       }}
     >
       <NodeResizer
         color="#00bcd4"
         isVisible
-        minWidth={350}
-        minHeight={250}
+        minWidth={150}   
+        minHeight={100}  
         handleStyle={{ width: 10, height: 10 }}
       />
 
-      {/* Refresh Button */}
       <IconButton
         aria-label="refresh"
         onClick={() => onRefresh(id, data.query)}
@@ -56,7 +55,6 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
         <RefreshIcon sx={{ fontSize: "0.75rem" }} />
       </IconButton>
 
-      {/* Close Button */}
       <IconButton
         aria-label="close"
         onClick={() => onRemove(id)}
@@ -74,7 +72,13 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
       >
         <CloseIcon sx={{ fontSize: "0.75rem" }} />
       </IconButton>
-      {!graphData && <Typography variant="h6" p={10} pt={8}>Carregando...</Typography>}
+
+      {!graphData && (
+        <Typography variant="h6" p={10} pt={8}>
+          Carregando...
+        </Typography>
+      )}
+
       {graphData && Array.isArray(graphData.data) && graphData.layout && (
         <Plot
           data={graphData.data}
@@ -83,8 +87,8 @@ const GraphNode = memo(({ id, data, onRefresh, onRemove }) => {
             responsive: true,
             useResizeHandler: true,
             autosize: true,
-            margin: { l: 70, r: 70, t: 50, b: 70 },
-            font: { size: 10 },
+            margin: { l: 50, r: 20, t: 20, b: 50 },
+            font: { size: 8 },
             legend: { font: { size: 10 } },
           }}
           useResizeHandler

@@ -152,21 +152,32 @@ export default function DataCanvas() {
     if (message.trim()) {
       const query = message;
       const result = await fetchGraphData(query, storedUser);
-
+  
+      // Default position to center of viewport (like a drop in the center)
+      const bounds = reactFlowWrapper.current.getBoundingClientRect();
+      const position = {
+        x: bounds.width / 2 - 150, // center minus half of node width
+        y: bounds.height / 2 - 100, // center minus half of node height
+      };
+  
       const newNode = {
         id: getId(),
         type: "graphNode",
-        position: {
-          x: 200 + Math.random() * 300,
-          y: 100 + Math.random() * 300,
-        },
+        position,
+        style: { width: 300, height: 200 }, // Match onDrop
         data: { label: query, query, result },
       };
-
+  
       setNodes((nds) => [...nds, newNode]);
+  
+      setTimeout(() => {
+        fitView({ padding: 0.2 });
+      }, 0); // Ensures fitView runs after state update
+  
       setMessage("");
     }
   };
+  
 
   const handleRefresh = async (nodeId, query) => {
     const result = await fetchGraphData(query, storedUser);
